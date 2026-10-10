@@ -209,7 +209,40 @@ Once installed:
 - **Targeted Editing (Mode B)**: Rapidly tweak bullets, add/remove skills, retarget roles, or condense to 1 page without rerunning the entire intake pipeline.
 - **Deterministic ATS Scoring**: Runs `resume-skill ats` to compute keyword coverage %, locate section matches, and identify missing JD keywords without hallucination.
 - **Multi-format Ingest**: Extracts text from `.pdf`, `.docx`, `.md`, and `.txt` master resumes via `resume-skill extract`.
-- **Deterministic DOCX Rendering**: Produces pixel-accurate Word documents (.docx) with ATS-friendly layouts.
+- **ATS-Safe Visual Themes**: Choose between `modern-clean`, `executive-serif`, and `minimalist-mono`. Themes adjust styling only (fonts, colors, spacing, borders)—never layout structure—ensuring 100% ATS parser compatibility.
+- **Dual DOCX & Publication-Quality PDF Output**: Render both `.docx` and RenderCV/Typst `.pdf` with identical theme styling.
+
+---
+
+## CLI & Theme Reference
+
+The `resume-skill` CLI handles validation, scoring, text extraction, and document generation:
+
+```bash
+# 1. Render tailored resume to DOCX or PDF
+resume-skill render --input tailored_resume.json --output resume.docx --theme modern-clean
+resume-skill render --input tailored_resume.json --output resume.pdf --theme modern-clean
+
+# 2. Score ATS keyword coverage against a Job Description
+resume-skill ats --resume tailored_resume.json --jd job_description.md
+
+# 3. Extract text from master resume (.pdf, .docx, .txt, .md)
+resume-skill extract --input master_resume.pdf --output master.txt
+
+# 4. Validate resume JSON schema and check for banned AI phrasing
+resume-skill validate --input tailored_resume.json
+
+# 5. Export to RenderCV YAML for standalone customization
+resume-skill export --input tailored_resume.json --output resume.yaml --theme modern-clean
+```
+
+### Available Themes
+
+| Theme | Best For | Visual Style |
+|---|---|---|
+| `modern-clean` *(default)* | Tech, startups, product | Sans-serif (Calibri / Source Sans 3), deep navy accent, compact 1-page fit |
+| `executive-serif` | Finance, legal, corporate, senior roles | Serif (Georgia / XCharter), charcoal accent, centered header, subtle divider |
+| `minimalist-mono` | Quant, engineering, research | Monospace/clean sans (Arial), pure black & white, no divider lines |
 
 ---
 
@@ -719,6 +752,25 @@ pip uninstall resume-skill
 - 在子弹点筛选和改写完成前执行 ATS 检查
 - 在内容验证通过前渲染 DOCX
 - 在 JSON schema 验证通过前交付最终文件
+
+---
+
+## 核心功能与主题支持
+
+- **多主题设计系统**：提供 `modern-clean`、`executive-serif`、`minimalist-mono` 三套主题。仅控制字体、颜色、间距与边框，绝不使用多栏布局或文本框，确保 100% 通过 ATS 解析。
+- **双格式排版输出**：支持输出标准 Word 文档（`.docx`）与基于 Typst / RenderCV 的印刷级排版（`.pdf`）。
+- **命令行工具 (`resume-skill`)**：
+  ```bash
+  # 渲染 DOCX 或 PDF
+  resume-skill render --input tailored_resume.json --output resume.docx --theme modern-clean
+  resume-skill render --input tailored_resume.json --output resume.pdf --theme modern-clean
+
+  # ATS 关键词覆盖率评分
+  resume-skill ats --resume tailored_resume.json --jd job_description.md
+
+  # 从已有简历提取纯文本
+  resume-skill extract --input master_resume.pdf
+  ```
 
 ---
 
