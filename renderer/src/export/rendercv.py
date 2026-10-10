@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 
+from ..rendering.themes import get_theme
 from ..schemas.resume_schema import TailoredResume
 
 
@@ -26,7 +27,7 @@ def _extract_username_from_url(url: str, platform: str) -> str:
     return clean
 
 
-def to_rendercv_dict(resume: TailoredResume, theme: str = "engineeringresumes") -> Dict[str, Any]:
+def to_rendercv_dict(resume: TailoredResume, theme: Optional[str] = None) -> Dict[str, Any]:
     """
     Convert a TailoredResume instance to a RenderCV YAML-compatible dictionary.
     """
@@ -97,8 +98,10 @@ def to_rendercv_dict(resume: TailoredResume, theme: str = "engineeringresumes") 
     if resume.projects:
         proj_entries = []
         for p in resume.projects:
+            # RenderCV's entry templates ignore a 'url' field, so put the link
+            # in the name as a markdown link. Plain text is kept for ATS parsing.
             entry = {
-                "name": p.name,
+                "name": f"[{p.name}]({p.url})" if p.url else p.name,
             }
             if p.subtitle:
                 entry["summary"] = p.subtitle
@@ -106,8 +109,6 @@ def to_rendercv_dict(resume: TailoredResume, theme: str = "engineeringresumes") 
                 entry["date"] = p.dates
             if p.bullets:
                 entry["highlights"] = list(p.bullets)
-            if p.url:
-                entry["url"] = p.url
             proj_entries.append(entry)
         sections["projects"] = proj_entries
 
@@ -116,19 +117,12 @@ def to_rendercv_dict(resume: TailoredResume, theme: str = "engineeringresumes") 
         edu_entries = []
         for ed in resume.education:
             # RenderCV requires both 'institution' and 'area'
-            degree = ed.degree or "Degree"
-            area = "General"
-            if " in " in degree:
-                parts = degree.split(" in ", 1)
-                degree = parts[0].strip()
-                area = parts[1].strip()
-            elif degree:
-                area = degree
-
+            # Keep the full degree text in 'area' and omit 'degree'. The separate
+            # degree column is narrow (wraps and overlaps) and repeats the text in
+            # some themes. The column is switched off in the design below.
             entry = {
                 "institution": ed.school,
-                "area": area,
-                "degree": degree,
+                "area": ed.degree or "Education",
             }
             if ed.location:
                 entry["location"] = ed.location
@@ -149,11 +143,17 @@ def to_rendercv_dict(resume: TailoredResume, theme: str = "engineeringresumes") 
 
     cv["sections"] = sections
 
+    t = get_theme(theme)
+    design: Dict[str, Any] = {"theme": t.pdf_base}
+    design.update(t.pdf_design)
+    design.setdefault("entry_types", {"education_entry": {
+        "degree_column_template": None,
+        "main_column_first_row_template": "**INSTITUTION**, AREA",
+    }})
+
     return {
         "cv": cv,
-        "design": {
-            "theme": theme,
-        },
+        "design": design,
         "locale": {
             "last_updated_date_template": "",
         },
@@ -163,7 +163,7 @@ def to_rendercv_dict(resume: TailoredResume, theme: str = "engineeringresumes") 
 def export_rendercv_yaml(
     resume: TailoredResume,
     output_path: Union[str, Path],
-    theme: str = "engineeringresumes",
+    theme: Optional[str] = None,
 ) -> Path:
     """Export a TailoredResume to a RenderCV YAML file."""
     data = to_rendercv_dict(resume, theme=theme)
@@ -187,7 +187,14 @@ def render_pdf_with_rendercv(
 
     # Run rendercv render
     cmd = ["rendercv", "render", str(y_path.resolve())]
-    proc = subprocess.run(cmd, cwd=str(y_path.parent), capture_output=True, text=True)
+    proc = subprocess.run(
+        cmd,
+        cwd=str(y_path.parent),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     if proc.returncode != 0:
         raise RuntimeError(f"RenderCV execution failed:\n{proc.stderr}\n{proc.stdout}")
 

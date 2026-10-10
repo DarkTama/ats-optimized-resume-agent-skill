@@ -28,3 +28,6 @@ examples/output/
 # OS
 .DS_Store
 Thumbs.db
+
+# personal CV fixtures (never commit)
+**/tests/local/

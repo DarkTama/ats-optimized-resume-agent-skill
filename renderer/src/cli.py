@@ -17,7 +17,7 @@ from pathlib import Path
 
 from .ats.scorer import score_ats
 from .ingest.extract import extract_text_from_file
-from .rendering.config import RenderConfig
+from .rendering.themes import UnknownThemeError, get_theme
 from .rendering.render_docx import ResumeRenderer
 from .schemas.resume_schema import TailoredResume
 from .utils.utils import load_json
@@ -46,11 +46,11 @@ def _render_cmd(args):
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_yaml = Path(tmp_dir) / "resume.yaml"
-            export_rendercv_yaml(resume, tmp_yaml, theme=args.theme or "engineeringresumes")
+            export_rendercv_yaml(resume, tmp_yaml, theme=args.theme)
             pdf_path = render_pdf_with_rendercv(tmp_yaml, out_path)
             print(f"PDF saved: {pdf_path}")
     else:
-        renderer = ResumeRenderer(config=RenderConfig())
+        renderer = ResumeRenderer(config=get_theme(args.theme).docx)
         out = renderer.render(resume, args.output)
         print(f"DOCX saved: {out}")
 
@@ -60,7 +60,7 @@ def _export_cmd(args):
     resume = TailoredResume.from_dict(raw)
     from .export.rendercv import export_rendercv_yaml
 
-    out = export_rendercv_yaml(resume, args.output, theme=args.theme or "engineeringresumes")
+    out = export_rendercv_yaml(resume, args.output, theme=args.theme)
     print(f"RenderCV YAML exported: {out}")
 
 def _validate_cmd(args):
@@ -119,7 +119,7 @@ def main():
     render_p = sub.add_parser("render", help="Render resume JSON → .docx or .pdf")
     render_p.add_argument("--input", "-i", required=True, help="Path to resume JSON")
     render_p.add_argument("--output", "-o", required=True, help="Output .docx or .pdf path")
-    render_p.add_argument("--theme", help="Theme for PDF rendering (default: engineeringresumes)")
+    render_p.add_argument("--theme", help="Theme for DOCX and PDF (default: modern-clean)")
     render_p.add_argument("--jd", help="Path or text of Job Description for optional ATS scoring check")
     render_p.add_argument("--skip-validation", action="store_true")
     render_p.set_defaults(func=_render_cmd)
@@ -147,11 +147,15 @@ def main():
     exp_p = sub.add_parser("export", help="Export tailored resume JSON to RenderCV YAML")
     exp_p.add_argument("--input", "-i", required=True, help="Path to tailored resume JSON")
     exp_p.add_argument("--output", "-o", required=True, help="Output .yaml path")
-    exp_p.add_argument("--theme", default="engineeringresumes", help="RenderCV theme (default: engineeringresumes)")
+    exp_p.add_argument("--theme", help="Theme (default: modern-clean)")
     exp_p.set_defaults(func=_export_cmd)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except UnknownThemeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":

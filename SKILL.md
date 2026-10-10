@@ -380,16 +380,26 @@ Step 2 — if the output was `NOT_INSTALLED`, install via pip (package was insta
 pip install resume-skill --quiet 2>/dev/null || python -m pip install resume-skill --quiet
 ```
 
-Step 3 — render using whichever invocation works:
+Step 3 — choose a theme. A theme changes styling only (fonts, color, spacing, dividers), never structure, so every theme stays ATS-safe. **Suggest one based on the target industry or JD, then ask the user to confirm or pick another. Never apply one silently.**
+
+| Theme | Best for | Look |
+|---|---|---|
+| `modern-clean` (default) | Tech, startup, product | Sans-serif, navy accent, compact |
+| `executive-serif` | Finance, legal, consulting, senior roles | Serif, charcoal, subtle dividers, centered header |
+| `minimalist-mono` | Quant, dev, research | Pure black, no divider lines |
+
+An unknown theme name fails with the list of valid names. `engineeringresumes` still works but is deprecated.
+
+Step 4 — render using whichever invocation works. The same `--theme` gives a matching look in both formats:
 ```bash
 # Standard Word Document (.docx):
-resume-skill render --input tailored_resume.json --output tailored_resume.docx --jd target_jd.md
+resume-skill render --input tailored_resume.json --output tailored_resume.docx --theme modern-clean --jd target_jd.md
 
-# Publication-Quality Typst PDF (via RenderCV engineeringresumes theme):
-resume-skill render --input tailored_resume.json --output tailored_resume.pdf --theme engineeringresumes
+# Publication-quality PDF (via RenderCV):
+resume-skill render --input tailored_resume.json --output tailored_resume.pdf --theme modern-clean
 
 # Export RenderCV YAML (for standalone customization):
-resume-skill export --input tailored_resume.json --output tailored_resume.yaml --theme engineeringresumes
+resume-skill export --input tailored_resume.json --output tailored_resume.yaml --theme modern-clean
 ```
 
 If neither works, diagnose the pip install error — do NOT fall back to writing a new renderer.

@@ -64,6 +64,22 @@ def _sample_resume() -> TailoredResume:
     )
 
 
+def test_project_url_becomes_markdown_link_in_name():
+    """RenderCV's entry templates ignore a 'url' field, so the link must live in the name."""
+    rcv = to_rendercv_dict(_sample_resume())
+    entry = rcv["cv"]["sections"]["projects"][0]
+    assert entry["name"] == "[openterm](https://github.com/rzkfyn/openterm)"
+    assert "url" not in entry
+
+
+def test_project_without_url_keeps_plain_name():
+    resume = _sample_resume()
+    resume.projects[0].url = ""
+    entry = to_rendercv_dict(resume)["cv"]["sections"]["projects"][0]
+    assert entry["name"] == "openterm"
+    assert "url" not in entry
+
+
 def test_to_rendercv_dict():
     resume = _sample_resume()
     rcv = to_rendercv_dict(resume, theme="engineeringresumes")
@@ -79,6 +95,6 @@ def test_to_rendercv_dict():
     assert sections["experience"][0]["company"] == "PT Digital Amore"
     assert sections["experience"][0]["highlights"] == ["Built loan calculation engine."]
     assert "projects" in sections
-    assert sections["projects"][0]["name"] == "openterm"
+    assert sections["projects"][0]["name"] == "[openterm](https://github.com/rzkfyn/openterm)"
     assert "skills" in sections
     assert any(s["label"] == "Core" for s in sections["skills"])
