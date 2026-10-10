@@ -5,49 +5,51 @@
 <a id="english"></a>
 
 # resume-skill — build-tailored-resume
+An AI agent skill for **PI-Desktop**, **Claude Code**, and coding assistants that transforms a master resume and a target job description into a polished, ATS-optimized Word document (.docx). Supports creating, targeted editing, PDF/DOCX ingestion, and deterministic ATS scoring.
 
-A Claude Code skill that transforms a master resume and a target job description into a polished, tailored Word document (.docx).
-
-Once installed, invoke it in Claude Code with:
-```
-/build-tailored-resume
-```
+Once installed:
+- **PI-Desktop**: Just ask PI in chat: `"tailor my resume"`, `"edit my resume"`, or load skill `build-tailored-resume`.
+- **Claude Code**: Invoke with `/build-tailored-resume`.
 
 ---
 
 ## ⚡ For AI Coding Agents — Read This First
 
-> **If you are an AI coding agent (Claude Code, Cursor, Windsurf, OpenClaw, or similar):**
-> The user wants to install this repository as a usable skill. This skill requires both a `SKILL.md` copy and a Python CLI install (`python-docx`, `lxml`). Run the single command below that matches the user's OS and scope — the install script handles both steps automatically.
+> **If you are an AI coding agent (PI-Desktop, Claude Code, Cursor, Windsurf, OpenClaw, or similar):**
+> The user wants to install this repository as a usable skill. This skill requires both a `SKILL.md` copy and a Python CLI install (`python-docx`, `lxml`, `pypdf`). Run the single command below that matches the user's environment and scope — the install script handles both steps automatically.
 >
-> **Claude Code — Mac / Linux (global, all projects):**
-> ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --user
-> ```
->
-> **Claude Code — Mac / Linux (project-level, current project only):**
-> ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --project
-> ```
->
-> **Claude Code — Windows (global, all projects):**
+> **PI-Desktop — Windows (global, all projects):**
 > ```powershell
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Scope user
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Runtime pi -Scope user
 > ```
 >
-> **Claude Code — Windows (project-level, current project only):**
+> **PI-Desktop — Mac / Linux (global, all projects):**
 > ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && powershell.exe -ExecutionPolicy Bypass -File /tmp/build-tailored-resume/install.ps1 -Scope project -ProjectPath "$(pwd)"
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --runtime=pi --user
 > ```
 >
-> **OpenClaw or other agents — Mac / Linux (global):**
+> **PI-Desktop — Current Project only:**
+> - Windows (PowerShell):
+>   ```powershell
+>   git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Runtime pi -Scope project -ProjectPath "$(Get-Location)"
+>   ```
+> - Mac / Linux:
+>   ```bash
+>   git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --runtime=pi --project --project-path="$(pwd)"
+>   ```
+>
+> **Claude Code — Mac / Linux (global):**
 > ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --user
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --runtime=claude --user
+> ```
+>
+> **Claude Code — Windows (global):**
+> ```powershell
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Runtime claude -Scope user
 > ```
 >
 > After install completes, confirm with `resume-skill --help`, then tell the user:
-> *"The build-tailored-resume skill is installed. Type `/build-tailored-resume` to get started. Have your master resume and the target job description ready."*
-
+> *"The build-tailored-resume skill is installed. Tell me to tailor or edit your resume, and have your master resume and target job description ready."*
 ---
 
 ## Table of Contents
@@ -197,7 +199,17 @@ Once installed, invoke it in Claude Code with:
 
 - Python 3.10 or later
 - `pip` in PATH
-- Claude Code installed
+- PI-Desktop, Claude Code, or compatible AI agent environment
+
+---
+
+## Key Capabilities
+
+- **Full Resume Tailoring (Mode A)**: Takes raw experience and JD to produce a tailored, humanized resume.
+- **Targeted Editing (Mode B)**: Rapidly tweak bullets, add/remove skills, retarget roles, or condense to 1 page without rerunning the entire intake pipeline.
+- **Deterministic ATS Scoring**: Runs `resume-skill ats` to compute keyword coverage %, locate section matches, and identify missing JD keywords without hallucination.
+- **Multi-format Ingest**: Extracts text from `.pdf`, `.docx`, `.md`, and `.txt` master resumes via `resume-skill extract`.
+- **Deterministic DOCX Rendering**: Produces pixel-accurate Word documents (.docx) with ATS-friendly layouts.
 
 ---
 
@@ -211,28 +223,53 @@ Choose one of the five methods below. All of them let you pick between **global*
 
 Copy one of the prompts below and paste it directly into your coding agent (Claude Code, Cursor, Windsurf, etc.). Your agent will detect your OS and run the install automatically.
 
-**Global install — available in all your projects (recommended):**
+#### For PI-Desktop
 
+**Global install (all projects):**
 ```
-Please install the build-tailored-resume Claude Code skill for me globally. Clone the repo at https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git into a temporary directory, then run the install script with the user/global flag — install.sh --user on Mac/Linux, or install.ps1 -Scope user on Windows. After install, confirm it works by running resume-skill --help.
-```
-
-**Project-level install — current project only:**
-
-```
-Please install the build-tailored-resume Claude Code skill for this project only. Clone the repo at https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git into a temporary directory, then run the install script with the project flag. On Mac/Linux run: install.sh --project --project-path="$(pwd)". On Windows run: powershell.exe -ExecutionPolicy Bypass -File install.ps1 -Scope project -ProjectPath "$(pwd)". After install, confirm it works by running resume-skill --help.
+Please install the build-tailored-resume skill for PI-Desktop globally. Clone the repo at https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git into a temporary directory, then run the install script: install.ps1 -Runtime pi -Scope user on Windows, or ./install.sh --runtime=pi --user on Mac/Linux. After install, confirm it works with resume-skill --help.
 ```
 
-Then invoke it:
+**Project-level install (current project only):**
 ```
-/build-tailored-resume
+Please install the build-tailored-resume skill for this project in PI-Desktop. Clone the repo at https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git into a temporary directory, then run: install.ps1 -Runtime pi -Scope project on Windows, or ./install.sh --runtime=pi --project on Mac/Linux. After install, confirm with resume-skill --help.
+```
+
+#### For Claude Code
+
+**Global install (all projects):**
+```
+Please install the build-tailored-resume Claude Code skill for me globally. Clone the repo at https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git into a temporary directory, then run the install script: install.ps1 -Runtime claude -Scope user on Windows, or ./install.sh --runtime=claude --user on Mac/Linux. After install, confirm with resume-skill --help.
+```
+
+**Project-level install (current project only):**
+```
+Please install the build-tailored-resume Claude Code skill for this project only. Clone the repo at https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git into a temporary directory, then run: install.ps1 -Runtime claude -Scope project on Windows, or ./install.sh --runtime=claude --project on Mac/Linux. After install, confirm with resume-skill --help.
 ```
 
 ---
 
 ### Method 1 — Direct Clone
 
-Clone the repository directly into your skills directory. Requires two commands: one to clone, one to install the Python CLI.
+Clone the repository directly into your agent's skills directory, then install the Python CLI.
+
+#### For PI-Desktop (`~/.agents/skills`)
+
+**Global — all projects:**
+
+Mac / Linux:
+```bash
+git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git ~/.agents/skills/build-tailored-resume
+pip install ~/.agents/skills/build-tailored-resume/renderer
+```
+
+Windows (PowerShell):
+```powershell
+git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git "$HOME\.agents\skills\build-tailored-resume"
+pip install "$HOME\.agents\skills\build-tailored-resume\renderer"
+```
+
+#### For Claude Code (`~/.claude/skills`)
 
 **Global — all projects:**
 
@@ -246,25 +283,6 @@ Windows (PowerShell):
 ```powershell
 git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git "$HOME\.claude\skills\build-tailored-resume"
 pip install "$HOME\.claude\skills\build-tailored-resume\renderer"
-```
-
-**Project-level — current project only:**
-
-Mac / Linux:
-```bash
-git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git .claude/skills/build-tailored-resume
-pip install .claude/skills/build-tailored-resume/renderer
-```
-
-Windows (PowerShell):
-```powershell
-git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git ".claude\skills\build-tailored-resume"
-pip install ".claude\skills\build-tailored-resume\renderer"
-```
-
-Then invoke it:
-```
-/build-tailored-resume
 ```
 
 ---
@@ -518,48 +536,51 @@ pip uninstall resume-skill
 
 # resume-skill — build-tailored-resume
 
-一个 Claude Code 技能插件，将你的完整简历母版和目标职位描述转化为一份精致、定向的 Word 文档（.docx）。
+适用于 **PI-Desktop**、**Claude Code** 及 AI 编程助手的简历定制与精修技能。支持从零定制、局部靶向修改、PDF/DOCX 简历母版解析、确定性 ATS 关键词评分并生成符合 ATS 规范的 Word 文档（.docx）。
 
-安装后，在 Claude Code 中输入以下命令即可调用：
-```
-/build-tailored-resume
-```
+安装后调用方式：
+- **PI-Desktop**: 在对话中直接说：`"帮我针对这个岗位定制简历"` 或 `"帮我修改简历"`。
+- **Claude Code**: 输入 `/build-tailored-resume`。
 
 ---
 
 ## ⚡ 致 AI 编程代理 — 请优先阅读此节
 
-> **如果你是 AI 编程代理（Claude Code、Cursor、Windsurf、OpenClaw 或同类工具）：**
-> 用户希望将此仓库安装为可用技能。此技能需要同时完成 `SKILL.md` 复制和 Python CLI 安装（`python-docx`、`lxml`）。请根据用户的操作系统和安装范围，运行下方对应的单条命令——安装脚本会自动处理两个步骤。
+> **如果你是 AI 编程代理（PI-Desktop、Claude Code、Cursor、Windsurf、OpenClaw 或同类工具）：**
+> 用户希望将此仓库安装为可用技能。此技能需要同时完成 `SKILL.md` 复制和 Python CLI 安装（`python-docx`、`lxml`、`pypdf`）。请根据用户的运行环境和安装范围，运行下方对应的单条命令——安装脚本会自动处理两个步骤。
 >
-> **Claude Code — Mac / Linux（全局，所有项目可用）：**
-> ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --user
-> ```
->
-> **Claude Code — Mac / Linux（项目级，仅当前项目）：**
-> ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --project
-> ```
->
-> **Claude Code — Windows（全局，所有项目可用）：**
+> **PI-Desktop — Windows（全局，所有项目可用）：**
 > ```powershell
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Scope user
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Runtime pi -Scope user
 > ```
 >
-> **Claude Code — Windows（项目级，仅当前项目）：**
+> **PI-Desktop — Mac / Linux（全局，所有项目可用）：**
 > ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && powershell.exe -ExecutionPolicy Bypass -File /tmp/build-tailored-resume/install.ps1 -Scope project -ProjectPath "$(pwd)"
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --runtime=pi --user
 > ```
 >
-> **OpenClaw 或其他代理 — Mac / Linux（全局）：**
+> **PI-Desktop — 当前项目：**
+> - Windows (PowerShell):
+>   ```powershell
+>   git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Runtime pi -Scope project -ProjectPath "$(Get-Location)"
+>   ```
+> - Mac / Linux:
+>   ```bash
+>   git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --runtime=pi --project --project-path="$(pwd)"
+>   ```
+>
+> **Claude Code — Mac / Linux（全局）：**
 > ```bash
-> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --user
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git /tmp/build-tailored-resume && chmod +x /tmp/build-tailored-resume/install.sh && /tmp/build-tailored-resume/install.sh --runtime=claude --user
+> ```
+>
+> **Claude Code — Windows（全局）：**
+> ```powershell
+> git clone https://github.com/SankaiAI/ats-optimized-resume-agent-skill.git $env:TEMP\build-tailored-resume; & "$env:TEMP\build-tailored-resume\install.ps1" -Runtime claude -Scope user
 > ```
 >
 > 安装完成后，运行 `resume-skill --help` 确认成功，然后告知用户：
-> *"build-tailored-resume 技能已安装完成。输入 `/build-tailored-resume` 即可开始使用。请准备好你的简历母版和目标职位描述。"*
-
+> *"build-tailored-resume 技能已安装完成。请提供简历母版和目标职位描述，告诉我需要定制或修改简历即可。"*
 ---
 
 ## 目录

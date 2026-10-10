@@ -10,7 +10,7 @@ from pathlib import Path
 
 def load_json(path: str | Path) -> dict:
     """Load a JSON file and return as dict."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 

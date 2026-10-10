@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resume-skill"
-version = "0.1.0"
-description = "Claude Code skill: build_tailored_resume — tailors a master resume to a specific job and renders a polished .docx"
+version = "0.2.0"
+description = "Agent skill: build-tailored-resume — tailors and edits resumes for jobs, ATS scoring, and renders polished .docx"
 requires-python = ">=3.10"
 dependencies = [
     "python-docx>=1.1.0",
     "lxml>=5.0.0",
+    "pypdf>=5.0.0",
 ]
 
 [project.scripts]
@@ -22,6 +23,9 @@ resume-skill = "resume_skill.cli:main"
 # resume_skill/* when the source directory is named src/ (not resume_skill/).
 packages = [
     "resume_skill",
+    "resume_skill.ats",
+    "resume_skill.ingest",
+    "resume_skill.export",
     "resume_skill.rendering",
     "resume_skill.schemas",
     "resume_skill.utils",

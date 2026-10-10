@@ -13,7 +13,7 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && p
 
 # ── Ensure python-docx and lxml are installed ─────────────────────────────────
 # On first run this installs deps silently; subsequent runs are instant.
-python -c "import docx" 2>/dev/null || pip install python-docx lxml --quiet
+python -c "import docx, pypdf" 2>/dev/null || pip install python-docx lxml pypdf --quiet
 
 # ── Run the CLI ───────────────────────────────────────────────────────────────
 PYTHONPATH="$PLUGIN_ROOT/renderer:$PYTHONPATH" python "$PLUGIN_ROOT/renderer/src/cli.py" "$@"

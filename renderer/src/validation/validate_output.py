@@ -10,8 +10,10 @@ from __future__ import annotations
 import re
 import urllib.parse
 from dataclasses import dataclass, field
-from typing import List
+from pathlib import Path
+from typing import List, Optional, Union
 
+from ..ats.scorer import score_ats
 from ..schemas.resume_schema import TailoredResume
 
 # ── Wording patterns to flag ─────────────────────────────────────────────────
@@ -59,11 +61,11 @@ class ValidationResult:
         if self.errors:
             lines.append(f"\nErrors ({len(self.errors)}):")
             for e in self.errors:
-                lines.append(f"  ✗ {e}")
+                lines.append(f"  [ERROR] {e}")
         if self.warnings:
             lines.append(f"\nWarnings ({len(self.warnings)}):")
             for w in self.warnings:
-                lines.append(f"  ⚠ {w}")
+                lines.append(f"  [WARN] {w}")
         if self.passed and not self.warnings:
             lines.append("  All checks passed.")
         return "\n".join(lines)
@@ -89,9 +91,13 @@ def _check_banned(text: str) -> List[str]:
     return hits
 
 
-def validate(resume: TailoredResume) -> ValidationResult:
+def validate(
+    resume: TailoredResume,
+    jd: Optional[Union[str, Path, List[str]]] = None,
+) -> ValidationResult:
     """
     Run all validation checks on a TailoredResume.
+    Optionally scores ATS keyword coverage if job description or keywords provided.
 
     Returns a ValidationResult with .passed, .errors, .warnings, and .report().
     """
@@ -176,5 +182,16 @@ def validate(resume: TailoredResume) -> ValidationResult:
         r.warn("target_role is empty")
     if not resume.target_company:
         r.warn("target_company is empty")
+
+    # ── Optional ATS scoring ──────────────────────────────────────────────
+    if jd is not None:
+        ats = score_ats(resume, jd)
+        for w in ats.warnings:
+            r.warn(w)
+        if ats.total_target > 0 and ats.match_rate < 50.0:
+            r.warn(
+                f"Low ATS keyword match rate: {ats.match_rate:.1f}% ({ats.matched_count}/{ats.total_target}). "
+                f"Missing keywords: {', '.join(ats.missing_keywords[:6])}"
+            )
 
     return r

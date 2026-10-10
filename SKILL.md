@@ -1,7 +1,7 @@
 ---
 name: build-tailored-resume
-description: "Use this skill whenever the user wants to create a tailored resume for a specific job posting. Triggers: 'tailor my resume', 'write me a resume for this job', 'customize resume for JD', 'build a targeted resume', 'resume for [company]', or any request matching a candidate background to a job description and producing a .docx. Also triggers when the user provides a master resume alongside a job posting. Do NOT use for general resume advice or cover letters."
-argument-hint: "[optional: output filename]"
+description: "Use this skill whenever the user wants to create, tailor, or edit a resume for a specific job posting, or update existing resume bullets. Triggers: 'tailor my resume', 'edit my resume', 'update my resume', 'write me a resume for this job', 'customize resume for JD', 'build a targeted resume', 'tweak resume bullets', 'modify resume', 'resume for [company]', 'ATS score my resume', or any request matching a candidate background to a job description and producing a .docx. Also triggers when user provides an existing resume to edit or improve. Do NOT use for general career advice or cover letters."
+argument-hint: "[optional: output filename or target role]"
 allowed-tools: Read Write Edit Bash Glob Grep WebSearch WebFetch
 license: MIT
 ---
@@ -43,10 +43,18 @@ This skill uses a **guardrailed workflow, not rigid choreography.**
 ```
 
 **Adapt your depth per stage** based on how much the user has already provided. If inputs are complete and explicit, move fast. If inputs are messy or incomplete, do more work.
+---
+
+## Operating modes
+
+Choose the appropriate mode based on user intent:
+
+1. **Mode A — Full Tailoring (From Scratch)**: When candidate provides raw experience/master resume + a target job description. Follow the 7-stage workflow below.
+2. **Mode B — Targeted Edit (Fast-Track)**: When user wants to tweak an existing resume (`tailored_resume.json` or existing `.docx`), rewrite specific bullets, add a project/skill, or adjust page fit. See [Mode B Workflow](#mode-b--targeted-edit-workflow) below.
 
 ---
 
-## Hard sequencing rules
+## Hard sequencing rules (Mode A)
 
 These cannot be bypassed regardless of how complete the input is:
 
@@ -64,7 +72,10 @@ Collect and normalize all inputs.
 
 **Required inputs:**
 - Candidate full name, email, phone
-- Master resume or experience inventory (any format: old resume, raw text, LinkedIn export, brag doc)
+- Master resume or experience inventory (.pdf, .docx, .txt, .md, or raw text) — **if provided as a file (.pdf or .docx), extract clean text via:**
+  ```bash
+  resume-skill extract --input path/to/master_resume.pdf
+  ```
 - Target job description
 - Target company name
 
@@ -251,20 +262,28 @@ Before advancing, verify:
 
 Run after bullet selection and rewriting. Cannot run before Gate 4.
 
-Print results:
+**Execute deterministic ATS keyword coverage scan:**
+```bash
+resume-skill ats --resume tailored_resume.json --jd job_description.md
+```
+Or test against explicit target keywords:
+```bash
+resume-skill ats --resume tailored_resume.json --keywords "SQL, Python, dbt, Airflow, Statsig"
+```
 
+Print results and verify structural rules:
 ```
 ATS check:
+[PASS] Deterministic keyword match >= 60%
 [PASS] Section headings are standard (Experience, Education, Skills, Projects, Certifications)
-[PASS] Top JD keywords appear naturally — matched: SQL, Tableau, A/B testing, cohort analysis, ETL
+[PASS] Top JD keywords appear naturally in bullets and skills
 [PASS] Contact info is clean and parse-friendly
-[PASS] No keyword stuffing
+[PASS] No keyword stuffing warnings
 [PASS] No decorative symbols or icons in body text
 [PASS] Dates and titles are consistent
 ```
 
-If any check fails, fix before proceeding.
-
+If match rate is below 60% or critical requirements are flagged as missing, integrate missing terms naturally into skills or relevant experience bullets before proceeding.
 ### GATE 5
 
 Before advancing, verify:
@@ -363,11 +382,14 @@ pip install resume-skill --quiet 2>/dev/null || python -m pip install resume-ski
 
 Step 3 — render using whichever invocation works:
 ```bash
-# Primary (CLI on PATH):
-resume-skill render --input tailored_resume.json --output tailored_resume.docx
+# Standard Word Document (.docx):
+resume-skill render --input tailored_resume.json --output tailored_resume.docx --jd target_jd.md
 
-# Fallback (module invocation — works even when PATH doesn't include Python Scripts):
-python -m resume_skill.cli render --input tailored_resume.json --output tailored_resume.docx
+# Publication-Quality Typst PDF (via RenderCV engineeringresumes theme):
+resume-skill render --input tailored_resume.json --output tailored_resume.pdf --theme engineeringresumes
+
+# Export RenderCV YAML (for standalone customization):
+resume-skill export --input tailored_resume.json --output tailored_resume.yaml --theme engineeringresumes
 ```
 
 If neither works, diagnose the pip install error — do NOT fall back to writing a new renderer.
@@ -403,6 +425,33 @@ Then deliver to the user:
 - Any honest gaps (missing tools, unsupported claims flagged, things to verify)
 
 ---
+
+## Mode B — Targeted Edit Workflow
+
+Use when updating, iterating, or editing an existing tailored resume without re-running full intake from scratch.
+
+### Edit Steps:
+
+1. **Identify Source Resume:**
+   - Check for existing `tailored_resume.json` or extract text from existing `.docx` using `resume-skill extract --input resume.docx`.
+2. **Scope the Delta:**
+   - Determine exact user edits: rewrite bullets in role X, add/remove skills, change summary narrative, retarget to a different JD, or condense to fit 1 page.
+3. **Apply Surgical Edits:**
+   - Modify the resume JSON directly. Do not erase unmentioned experiences or verified metrics.
+   - If retargeting to a new JD, re-run Stage 2 (JD Analysis) to identify new priority keywords.
+4. **Run Humanization Pass:**
+   - Verify all rewritten or added bullets follow the concrete impact formula (Action verb + what + tool + measurable result + scale).
+   - Ensure no vague buzzwords or generic AI phrasing.
+5. **Verify with Deterministic ATS Scoring:**
+   ```bash
+   resume-skill ats --resume tailored_resume.json --jd target_jd.md
+   ```
+   Confirm keyword coverage improved or remained steady.
+6. **Render DOCX & Validate:**
+   ```bash
+   resume-skill render --input tailored_resume.json --output tailored_resume.docx --jd target_jd.md
+   ```
+7. **Deliver:** Present updated `.docx` path and highlight exact changes made.
 
 ## What NOT to do
 
